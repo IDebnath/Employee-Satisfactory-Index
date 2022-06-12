@@ -1,0 +1,97 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+
+Name: Lokananda Debnath
+Dataset: Employee Satisfaction Index
+Source: https://www.kaggle.com/datasets/mohamedharris/employee-satisfaction-index-dataset 
+
+This is a fictitious dataset intended to aid data analysts in experimenting with trends and insights in the employee job satisfaction index. Employee education background, job level, recruitment type, compensation, and other essential elements are all included in this data collection. Studying this information is to determine which criteria are most relevant when evaluating work satisfaction in an organization.
+
+The initial questions followed by subsidiary questions to work with the data are given below: 
+1. Are employees satisfied with their salary based on their job level? #done
+2. Does a high salary job require a high level of educational degree? 
+3. Are employees with awards satisfied more with their job?
+4. Which departments have the highest salaries? 
+5. How does job level influence job satisfaction? 
+6. Does job level influence salary? 
+7. What is the average salary in each dept.? 
+
+
+The packages that would be essential for this project are:
+
+```{r setup, include=FALSE, echo=TRUE}
+library(tidyverse)
+
+library(ggplot2)
+
+library(dplyr)
+
+library(ggcorrplot)
+
+```
+
+To get an whole overview of the data set we need to transform the data set by using
+
+```{r}
+ es <- read.csv("Employee Satisfaction Index.csv")
+str(es)
+es <- es %>%  mutate_if(is.character,as.factor) %>% 
+mutate(Dept01 = Dept, location01 = location, education01 = education, recruitment_type01 = recruitment_type)
+summary(es)
+es2 <- data.frame(es[,c(3, 4, 6, 8:14)])
+ head(es)
+```
+According to the summary, the HR, Marketing, Purchasing, Sales, and Technology departments each have 106, 95, 109, 92, and 98 personnel, respectively. In cities and suburbs, half of them work. The company's average employee is 38 years old. The salaries of all employees range from $24,076.00 to $86,750.00.
+
+To visualize how the salary varies based on job level, a geom function is given below:
+
+```{r}
+ggplot(data = es) + geom_point(aes(job_level, salary), size = 8) +labs(title = "Relationship between job level and salary.", x = "Job Level", y = "Salary (USD)")
+```
+We can see from the research on job level vs. salary that most highly paid individuals are dissatisfied with their jobs. Level 1 personnel, on the other hand, are pretty happy with their jobs, which means that levels two and up do not pay as well as levels 1 and 2.
+
+```{r}
+ggplot(es2, aes(x = salary, y = job_level, color = satisfied)) +
+geom_point(size = 8) +labs(title = "Satisfaction over salary and job level", x = "Salary (USD)", y = "Job level")
+```
+
+After evaluating the data to see if a better wage necessitates a higher degree for a particular organization, we can conclude that education background has no bearing on salary. As we can see, the pay gap between employees with an undergraduate degree and those with a postgraduate degree is just about $400.00, and undergraduates are paid more than those with a postgraduate degree. This suggests that educational background is not a priority for this organization and is more concerned with technical experience.
+```{r}
+es2%>%group_by(education) %>% summarise(mean = mean(salary))
+```
+
+Satisfaction in employees with awards does not differ much except for the fact that very less number employees are satisfied with only 1 - 2 awards. 
+```{r}
+ggplot(data = es) + geom_col(aes(awards, satisfied)) + labs(title = "Job satisfation in employees with awards.", x = "Number of Awards", y = "Number of satisfied employees")
+```
+
+From the pay vs. department study, we may deduce that the company's purchasing department has the highest-paid personnel. For both the highest and lowest salaries in the organization, the purchasing department has the most significant number. In the purchasing department, about 30 people are paid more than $80,000.00, as seen in the graph below. Furthermore, the graph shows that the majority of the employees in the department are paid above average. This demonstrates the importance of the purchasing department to the organization.
+```{r}
+ggplot(es2, aes(x = salary)) +
+geom_histogram(fill = "white", colour = "black") +
+facet_grid(Dept ~ .) + labs(title = "Salary Insiights", x = "Salary (USD)", y = "Number of Employees")
+```
+
+
+Furthermore, we will use a correlation chart to figure out some hypotheses mentioned above. Before generating a correlation graph, we must filter the columns that we will be working with.
+
+The correlation graph is generated using the following R script.
+
+```{r}
+model.matrix(~0+., data=es2) %>% 
+cor(use="pairwise.complete.obs") %>% 
+ggcorrplot(show.diag = F, type="lower", lab=TRUE, lab_size=1) + labs(title = "Correlation of variables") 
+ 
+```
+
+The connection as mentioned above provides answers to two crucial study questions: how job level affects compensation and job happiness. According to the graph, job level is highly related to salary, with a correlation of 0.98, implying that salary will rise or fall in proportion to job level.
+On the contrary, the connection between job level and job satisfaction is 0.01, which is not statistically significant. The value of 0.01 does not imply that the two variables are related. As a result, we may conclude that while an employee's job level is substantially correlated with their compensation, it has no bearing on job satisfaction.
+In each section of the organization, the average compensation differs. The purchasing department, as previously stated, has the highest average compensation. The lowest average wage is $44,057.97 in the technology department, while the highest average compensation is $50,122.66 in the marketing department.
+```{r}
+ es %>% group_by(Dept) %>% summarise(avg_salary = mean(salary)) %>% arrange(desc(avg_salary))
+```
+
+Although the data utilized in this analysis is fictitious, it gives a wealth of trends and insights into how employees feel about their jobs. Throughout the research, it is discovered that many assumptions prevalent in today's world are untrue, such as the belief that a high-paying profession can guarantee happiness. This experiment demonstrates that, in addition to money, there may be additional factors that influence whether or not a job is satisfying. It also demonstrates how some businesses underpay their staff. According to this research, employees with even the most extraordinary wages are dissatisfied with their work. This could indicate that the corporation does not value its personnel. However, I worked out how to work with the data by playing with it using various R features and data visualization approaches until a pattern was noticed. With the appropriate knowledge of technique, it is pretty straightforward to solve a problem once a pattern is found.
